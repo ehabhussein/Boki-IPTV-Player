@@ -29,6 +29,26 @@ public sealed class PlayerService : IPlayerService, IDisposable
     public void TogglePause() => _player.Pause();
     public void SetVolume(double v01) => _player.Volume = (int)Math.Clamp(v01 * 100, 0, 100);
 
+    // --- Video adjustments (persist on the player; reapplied after each Play) ---
+    private float _brightness = 1, _contrast = 1, _saturation = 1, _rate = 1;
+
+    public void SetBrightness(double v) { _brightness = (float)v; ApplyAdjustments(); }
+    public void SetContrast(double v) { _contrast = (float)v; ApplyAdjustments(); }
+    public void SetSaturation(double v) { _saturation = (float)v; ApplyAdjustments(); }
+    public void SetSpeed(double v) { _rate = (float)v; try { _player.SetRate(_rate); } catch { } }
+
+    private void ApplyAdjustments()
+    {
+        try
+        {
+            _player.SetAdjustInt(VideoAdjustOption.Enable, 1);
+            _player.SetAdjustFloat(VideoAdjustOption.Brightness, _brightness);
+            _player.SetAdjustFloat(VideoAdjustOption.Contrast, _contrast);
+            _player.SetAdjustFloat(VideoAdjustOption.Saturation, _saturation);
+        }
+        catch { /* video output not ready yet — reapplied on next change/Play */ }
+    }
+
     public bool HasPendingResume => _pendingResumeMs > 0;
 
     /// Applies a pending resume seek once the media is actually playing and seekable.
@@ -72,6 +92,8 @@ public sealed class PlayerService : IPlayerService, IDisposable
         using var media = new Media(_libvlc, new Uri(target));
         media.AddOption(":network-caching=1000");
         _player.Play(media);
+        ApplyAdjustments();
+        try { _player.SetRate(_rate); } catch { }
     }
 
     public void Dispose() { _player.Dispose(); _libvlc.Dispose(); }

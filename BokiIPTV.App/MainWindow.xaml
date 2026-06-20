@@ -172,6 +172,28 @@
                             <TextBlock Text="{Binding Player.TimeText}" Foreground="{StaticResource TextMuted}"
                                        VerticalAlignment="Center" DockPanel.Dock="Left" Width="110" FontSize="12"/>
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                <ToggleButton x:Name="AdjustBtn" Content="⚙" Padding="10,4" Margin="0,0,6,0"
+                                              Background="{StaticResource Card}" ToolTip="Video adjustments"/>
+                                <Popup IsOpen="{Binding IsChecked, ElementName=AdjustBtn}"
+                                       PlacementTarget="{Binding ElementName=AdjustBtn}" Placement="Top"
+                                       StaysOpen="False" AllowsTransparency="True" HorizontalOffset="-90">
+                                    <Border Background="#15181F" CornerRadius="10" Padding="16" Width="250"
+                                            BorderBrush="{StaticResource AccentDim}" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="Brightness" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                            <Slider Minimum="0" Maximum="2" Value="{Binding Player.Brightness}" Margin="0,2,0,8"/>
+                                            <TextBlock Text="Contrast" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                            <Slider Minimum="0" Maximum="2" Value="{Binding Player.Contrast}" Margin="0,2,0,8"/>
+                                            <TextBlock Text="Saturation" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                            <Slider Minimum="0" Maximum="3" Value="{Binding Player.Saturation}" Margin="0,2,0,8"/>
+                                            <TextBlock Text="Playback speed" Foreground="{StaticResource TextMuted}" FontSize="12"/>
+                                            <Slider Minimum="0.25" Maximum="2" TickFrequency="0.25" IsSnapToTickEnabled="True"
+                                                    Value="{Binding Player.Speed}" Margin="0,2,0,10"/>
+                                            <Button Content="Reset" Command="{Binding Player.ResetAdjustmentsCommand}"
+                                                    Padding="10,5" HorizontalAlignment="Right" Background="{StaticResource Card}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
                                 <Button Content="🗗" Click="Pip_Click" Padding="10,4" Margin="0,0,6,0"
                                         Background="{StaticResource Card}" ToolTip="Mini player / Picture-in-Picture (always on top)"/>
                                 <Button Content="⛶" Click="Fullscreen_Click" Padding="10,4"

@@ -18,6 +18,10 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private bool _isSeekable;
     [ObservableProperty] private string _timeText = "00:00 / 00:00";
     [ObservableProperty] private string? _nowPlaying;
+    [ObservableProperty] private double _brightness = 1.0;
+    [ObservableProperty] private double _contrast = 1.0;
+    [ObservableProperty] private double _saturation = 1.0;
+    [ObservableProperty] private double _speed = 1.0;
 
     public PlayerViewModel(IPlayerService player, IResumeService resume)
     {
@@ -58,7 +62,17 @@ public partial class PlayerViewModel : ObservableObject
 
     partial void OnVolumeChanged(double value) => _player.SetVolume(value);
     partial void OnPositionChanged(double value) { if (!_suppressSeek) _player.Position = value; }
+    partial void OnBrightnessChanged(double value) => _player.SetBrightness(value);
+    partial void OnContrastChanged(double value) => _player.SetContrast(value);
+    partial void OnSaturationChanged(double value) => _player.SetSaturation(value);
+    partial void OnSpeedChanged(double value) => _player.SetSpeed(value);
 
     [RelayCommand] private void PlayPause() => _player.TogglePause();
     [RelayCommand] private void Stop() => _player.Stop();
+
+    [RelayCommand]
+    private void ResetAdjustments()
+    {
+        Brightness = 1.0; Contrast = 1.0; Saturation = 1.0; Speed = 1.0;
+    }
 }

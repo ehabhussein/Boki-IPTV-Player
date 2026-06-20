@@ -10,6 +10,11 @@ public interface IPlayerService
     bool HasPendingResume { get; }
     void ApplyResumeIfReady();
     void Stop();
+
+    void SetBrightness(double v);   // 0..2  (1 = normal)
+    void SetContrast(double v);     // 0..2  (1 = normal)
+    void SetSaturation(double v);   // 0..3  (1 = normal)
+    void SetSpeed(double v);        // 0.25..2 (1 = normal)
     void TogglePause();
     void SetVolume(double v01);
 
