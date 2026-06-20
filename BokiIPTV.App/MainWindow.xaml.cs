@@ -11,7 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
     private bool _fullscreen;
-    private GridLength _c0, _c1, _c2, _detail, _playerRow;
+    private GridLength _c0, _c1, _c2, _c3, _detail, _playerRow;
     private WindowStyle _prevStyle;
     private WindowState _prevState;
     private ResizeMode _prevResize;
@@ -64,15 +64,16 @@ public partial class MainWindow : Window
     {
         if (!_fullscreen)
         {
-            _c0 = Col0.Width; _c1 = Col1.Width; _c2 = Col2.Width;
+            _c0 = Col0.Width; _c1 = Col1.Width; _c2 = Col2.Width; _c3 = Col3.Width;
             _detail = DetailRow.Height; _playerRow = PlayerRow.Height;
             _prevStyle = WindowStyle; _prevState = WindowState; _prevResize = ResizeMode;
 
             Col0.Width = new GridLength(0);
             Col1.Width = new GridLength(0);
             Col2.Width = new GridLength(0);
+            Col3.Width = new GridLength(1, GridUnitType.Star);        // player column fills full width
             DetailRow.Height = new GridLength(0);
-            PlayerRow.Height = new GridLength(1, GridUnitType.Star);   // video now fills the whole window
+            PlayerRow.Height = new GridLength(1, GridUnitType.Star);   // video fills full height
             DetailPanel.Visibility = Visibility.Collapsed;
 
             WindowStyle = WindowStyle.None;
@@ -82,7 +83,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            Col0.Width = _c0; Col1.Width = _c1; Col2.Width = _c2;
+            Col0.Width = _c0; Col1.Width = _c1; Col2.Width = _c2; Col3.Width = _c3;
             DetailRow.Height = _detail; PlayerRow.Height = _playerRow;
             DetailPanel.Visibility = Visibility.Visible;
 
