@@ -11,10 +11,13 @@ public class EpgServiceTests
         public Task<UserInfo> AuthenticateAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Category>> GetLiveCategoriesAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Channel>> GetLiveStreamsAsync(string c, CancellationToken ct) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Channel>> GetAllLiveStreamsAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Category>> GetVodCategoriesAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Movie>> GetVodStreamsAsync(string c, CancellationToken ct) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Movie>> GetAllVodStreamsAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Category>> GetSeriesCategoriesAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Series>> GetSeriesAsync(string c, CancellationToken ct) => throw new NotImplementedException();
+        public Task<IReadOnlyList<Series>> GetAllSeriesAsync(CancellationToken ct) => throw new NotImplementedException();
         public Task<SeriesInfo> GetSeriesInfoAsync(int id, CancellationToken ct) => throw new NotImplementedException();
         public Task<VodInfo> GetVodInfoAsync(int id, CancellationToken ct) => throw new NotImplementedException();
     }

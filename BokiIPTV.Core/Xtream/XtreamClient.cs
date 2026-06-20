@@ -35,14 +35,20 @@ public sealed class XtreamClient(HttpClient http, XtreamCredentials cred) : IXtr
         => GetListAsync<Category>(Url("get_live_categories"), ct);
     public Task<IReadOnlyList<Channel>> GetLiveStreamsAsync(string categoryId, CancellationToken ct)
         => GetListAsync<Channel>(Url("get_live_streams", ("category_id", categoryId)), ct);
+    public Task<IReadOnlyList<Channel>> GetAllLiveStreamsAsync(CancellationToken ct)
+        => GetListAsync<Channel>(Url("get_live_streams"), ct);
     public Task<IReadOnlyList<Category>> GetVodCategoriesAsync(CancellationToken ct)
         => GetListAsync<Category>(Url("get_vod_categories"), ct);
     public Task<IReadOnlyList<Movie>> GetVodStreamsAsync(string categoryId, CancellationToken ct)
         => GetListAsync<Movie>(Url("get_vod_streams", ("category_id", categoryId)), ct);
+    public Task<IReadOnlyList<Movie>> GetAllVodStreamsAsync(CancellationToken ct)
+        => GetListAsync<Movie>(Url("get_vod_streams"), ct);
     public Task<IReadOnlyList<Category>> GetSeriesCategoriesAsync(CancellationToken ct)
         => GetListAsync<Category>(Url("get_series_categories"), ct);
     public Task<IReadOnlyList<Series>> GetSeriesAsync(string categoryId, CancellationToken ct)
         => GetListAsync<Series>(Url("get_series", ("category_id", categoryId)), ct);
+    public Task<IReadOnlyList<Series>> GetAllSeriesAsync(CancellationToken ct)
+        => GetListAsync<Series>(Url("get_series"), ct);
     public Task<SeriesInfo> GetSeriesInfoAsync(int seriesId, CancellationToken ct)
         => GetAsync<SeriesInfo>(Url("get_series_info", ("series_id", seriesId.ToString())), ct);
     public Task<VodInfo> GetVodInfoAsync(int vodId, CancellationToken ct)

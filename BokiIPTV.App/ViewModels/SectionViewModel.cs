@@ -83,9 +83,20 @@ public partial class SectionViewModel : ObservableObject
     partial void OnSearchTextChanged(string value) => _ = LoadItemsAsync();
     partial void OnSelectedItemChanged(object? value) => _ = LoadDetailAsync(value);
 
+    private List<object>? _allItems;   // whole-section catalogue, lazily loaded for global search
+
     public async Task LoadItemsAsync()
     {
         if (Kind == SectionKind.Favorites) { LoadFavorites(); return; }
+
+        // Global search: when the user types, search the ENTIRE section catalogue
+        // (every category at once), like IPTV Smarters — not just the open category.
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            await SearchAllAsync(SearchText);
+            return;
+        }
+
         Items.Clear();
         if (SelectedCategory is null) return;
         Loading = true;
@@ -98,12 +109,54 @@ public partial class SectionViewModel : ObservableObject
                 SectionKind.Series => await _client.GetSeriesAsync(SelectedCategory.CategoryId, default),
                 _ => []
             };
-            if (!string.IsNullOrWhiteSpace(SearchText))
-                items = items.Where(i => Name(i).Contains(SearchText, StringComparison.OrdinalIgnoreCase));
             foreach (var i in items) Items.Add(i);
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"LoadItems failed: {ex.Message}"); }
         finally { Loading = false; }
+    }
+
+    private async Task SearchAllAsync(string query)
+    {
+        Loading = true;
+        try
+        {
+            _allItems ??= await LoadAllItemsAsync();
+            Items.Clear();
+            foreach (var i in _allItems.Where(i => Name(i).Contains(query, StringComparison.OrdinalIgnoreCase)).Take(500))
+                Items.Add(i);
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Search failed: {ex.Message}"); }
+        finally { Loading = false; }
+    }
+
+    private async Task<List<object>> LoadAllItemsAsync()
+    {
+        var cacheKey = $"all_{Kind}";
+        var cached = Kind switch
+        {
+            SectionKind.Live => (await _cache.GetAsync<List<Channel>>(cacheKey))?.Cast<object>().ToList(),
+            SectionKind.Movies => (await _cache.GetAsync<List<Movie>>(cacheKey))?.Cast<object>().ToList(),
+            SectionKind.Series => (await _cache.GetAsync<List<Series>>(cacheKey))?.Cast<object>().ToList(),
+            _ => null
+        };
+        if (cached is not null) return cached;
+
+        switch (Kind)
+        {
+            case SectionKind.Live:
+                var live = (await _client.GetAllLiveStreamsAsync(default)).ToList();
+                await _cache.SetAsync(cacheKey, live);
+                return live.Cast<object>().ToList();
+            case SectionKind.Movies:
+                var vod = (await _client.GetAllVodStreamsAsync(default)).ToList();
+                await _cache.SetAsync(cacheKey, vod);
+                return vod.Cast<object>().ToList();
+            case SectionKind.Series:
+                var ser = (await _client.GetAllSeriesAsync(default)).ToList();
+                await _cache.SetAsync(cacheKey, ser);
+                return ser.Cast<object>().ToList();
+            default: return [];
+        }
     }
 
     private async Task LoadDetailAsync(object? item)

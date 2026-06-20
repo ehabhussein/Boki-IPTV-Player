@@ -24,6 +24,15 @@ public sealed class PlayerService : IPlayerService, IDisposable
     public void TogglePause() => _player.Pause();
     public void SetVolume(double v01) => _player.Volume = (int)Math.Clamp(v01 * 100, 0, 100);
 
+    public double Position
+    {
+        get => _player.Position;
+        set { if (_player.IsSeekable) _player.Position = (float)Math.Clamp(value, 0, 1); }
+    }
+    public long TimeMs => _player.Time;
+    public long LengthMs => _player.Length;
+    public bool IsSeekable => _player.IsSeekable;
+
     // Honors the account's max_connections:1: the guard stops the active stream
     // before we open the next one, so the server never sees two simultaneous
     // connections (which it would reject). network-caching smooths HLS/TS startup

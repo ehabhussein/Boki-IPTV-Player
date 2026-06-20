@@ -8,4 +8,10 @@ public interface IPlayerService
     void Stop();
     void TogglePause();
     void SetVolume(double v01);
+
+    /// 0..1 position within the stream. Settable to seek (VOD only).
+    double Position { get; set; }
+    long TimeMs { get; }
+    long LengthMs { get; }
+    bool IsSeekable { get; }
 }

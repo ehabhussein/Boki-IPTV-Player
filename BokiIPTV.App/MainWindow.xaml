@@ -4,12 +4,13 @@
         xmlns:local="clr-namespace:BokiIPTV.App"
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
         Title="BokiIPTV" Height="800" Width="1340"
-        WindowStartupLocation="CenterScreen" Background="#202225">
+        WindowStartupLocation="CenterScreen" Background="#202225"
+        KeyDown="Window_KeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150"/>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition x:Name="Col0" Width="150"/>
+            <ColumnDefinition x:Name="Col1" Width="220"/>
+            <ColumnDefinition x:Name="Col2" Width="300"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -18,7 +19,7 @@
                  DisplayMemberPath="Title" Background="#1E1F22" Foreground="White"
                  BorderThickness="0" FontSize="14"/>
 
-        <!-- Categories -->
+        <!-- Categories (playlists) -->
         <DockPanel Grid.Column="1" Background="#2B2D31">
             <TextBlock DockPanel.Dock="Top" Text="Categories" Foreground="#B9BBBE"
                        Margin="10,8" FontWeight="SemiBold"/>
@@ -35,8 +36,23 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBox Grid.Row="0" Margin="8" Padding="6"
-                     Text="{Binding SelectedSection.SearchText, UpdateSourceTrigger=PropertyChanged, Delay=400}"/>
+            <Grid Grid.Row="0">
+                <TextBox Margin="8" Padding="6,6,6,6"
+                         Text="{Binding SelectedSection.SearchText, UpdateSourceTrigger=PropertyChanged, Delay=450}"/>
+                <TextBlock Text="Search all…" Foreground="#80FFFFFF" Margin="16,0,0,0"
+                           VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedSection.SearchText}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
             <ListBox Grid.Row="1" x:Name="ItemsList" ItemsSource="{Binding SelectedSection.Items}"
                      SelectedItem="{Binding SelectedSection.SelectedItem}"
                      Background="Transparent" Foreground="White" BorderThickness="0"
@@ -58,12 +74,12 @@
         <!-- Detail + player -->
         <Grid Grid.Column="3">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="340"/>
+                <RowDefinition x:Name="DetailRow" Height="*"/>
+                <RowDefinition Height="360"/>
             </Grid.RowDefinitions>
 
             <!-- Detail panel -->
-            <Border Grid.Row="0" Background="#232428" Padding="16">
+            <Border x:Name="DetailPanel" Grid.Row="0" Background="#232428" Padding="16">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -71,7 +87,6 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header: poster + title/meta/actions -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal">
                         <Border Width="130" Height="190" Background="#1B1C1F" CornerRadius="6">
                             <Image Stretch="UniformToFill"
@@ -95,11 +110,9 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Plot -->
                     <TextBlock Grid.Row="1" Text="{Binding SelectedSection.DetailPlot}" Foreground="#C7CBD1"
                                TextWrapping="Wrap" Margin="0,14,0,0" MaxHeight="120"/>
 
-                    <!-- Episodes (series) -->
                     <DockPanel Grid.Row="2" Margin="0,14,0,0"
                                Visibility="{Binding SelectedSection.HasEpisodes, Converter={x:Static local:BoolToVisibilityConverter.Instance}}">
                         <TextBlock DockPanel.Dock="Top" Text="Episodes (double-click to play)"
@@ -124,14 +137,41 @@
 
             <!-- Player -->
             <Grid Grid.Row="1" Background="Black">
-                <vlc:VideoView x:Name="Video"/>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                            Margin="0,0,0,8" Background="#88000000">
-                    <Button Content="Play/Pause" Command="{Binding Player.PlayPauseCommand}" Margin="4" Padding="8,4"/>
-                    <Button Content="Stop" Command="{Binding Player.StopCommand}" Margin="4" Padding="8,4"/>
-                    <Slider Width="120" Minimum="0" Maximum="1" Value="{Binding Player.Volume}"
-                            VerticalAlignment="Center" Margin="8,0"/>
-                </StackPanel>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="Black" MouseLeftButtonDown="Video_DoubleClick">
+                    <vlc:VideoView x:Name="Video"/>
+                </Border>
+
+                <!-- Control bar -->
+                <Grid Grid.Row="1" Background="#16171A">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Seek bar (VOD) -->
+                    <Slider Grid.Row="0" Margin="10,6,10,0" Minimum="0" Maximum="1"
+                            Value="{Binding Player.Position}"
+                            IsEnabled="{Binding Player.IsSeekable}"/>
+
+                    <DockPanel Grid.Row="1" Margin="10,4,10,8">
+                        <TextBlock Text="{Binding Player.TimeText}" Foreground="#C7CBD1"
+                                   VerticalAlignment="Center" DockPanel.Dock="Left" Width="120"/>
+                        <Button Content="⛶ Fullscreen" Click="Fullscreen_Click" DockPanel.Dock="Right"
+                                Padding="10,4" Margin="6,0,0,0"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="⏯ Play/Pause" Command="{Binding Player.PlayPauseCommand}" Margin="4" Padding="10,4"/>
+                            <Button Content="⏹ Stop" Command="{Binding Player.StopCommand}" Margin="4" Padding="10,4"/>
+                            <TextBlock Text="🔊" Foreground="White" VerticalAlignment="Center" Margin="10,0,4,0"/>
+                            <Slider Width="110" Minimum="0" Maximum="1" Value="{Binding Player.Volume}"
+                                    VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>
