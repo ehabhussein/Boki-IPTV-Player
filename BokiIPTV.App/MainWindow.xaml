@@ -145,8 +145,12 @@
                         <DockPanel Margin="0,4,0,2">
                             <TextBlock Text="{Binding Player.TimeText}" Foreground="{StaticResource TextMuted}"
                                        VerticalAlignment="Center" DockPanel.Dock="Left" Width="110" FontSize="12"/>
-                            <Button Content="⛶" Click="Fullscreen_Click" DockPanel.Dock="Right"
-                                    Padding="10,4" Background="{StaticResource Card}" ToolTip="Fullscreen (F11)"/>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                <Button Content="🗗" Click="Pip_Click" Padding="10,4" Margin="0,0,6,0"
+                                        Background="{StaticResource Card}" ToolTip="Mini player / Picture-in-Picture (always on top)"/>
+                                <Button Content="⛶" Click="Fullscreen_Click" Padding="10,4"
+                                        Background="{StaticResource Card}" ToolTip="Fullscreen (F11)"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button Content="⏯" Command="{Binding Player.PlayPauseCommand}" Margin="3" Padding="12,4" Background="{StaticResource Card}"/>
                                 <Button Content="⏹" Command="{Binding Player.StopCommand}" Margin="3" Padding="12,4" Background="{StaticResource Card}"/>
