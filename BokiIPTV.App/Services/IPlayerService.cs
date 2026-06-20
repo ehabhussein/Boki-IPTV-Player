@@ -4,8 +4,9 @@ namespace BokiIPTV.App.Services;
 public interface IPlayerService
 {
     void Attach(VideoView view);
-    void Play(string url, string? title = null);
+    void Play(string url, string? title = null, string? resumeKey = null, long resumeMs = 0);
     string? NowPlayingTitle { get; }
+    string? CurrentKey { get; }
     void Stop();
     void TogglePause();
     void SetVolume(double v01);

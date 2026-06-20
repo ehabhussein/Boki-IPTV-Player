@@ -10,12 +10,18 @@ public sealed class PlayerService : IPlayerService, IDisposable
     private readonly MediaPlayer _player;
     private readonly PlayerGuard _guard = new();
 
+    private long _pendingResumeMs;
+
     public PlayerService()
     {
         LibVLCSharp.Shared.Core.Initialize();   // loads native libvlc (qualified to avoid BokiIPTV.Core clash)
         _libvlc = new LibVLC();
         _player = new MediaPlayer(_libvlc);
         _player.Stopped += (_, _) => _guard.MarkStopped();
+        _player.Playing += (_, _) =>
+        {
+            if (_pendingResumeMs > 0) { _player.Time = _pendingResumeMs; _pendingResumeMs = 0; }
+        };
     }
 
     public void Attach(VideoView view) => view.MediaPlayer = _player;
@@ -38,10 +44,13 @@ public sealed class PlayerService : IPlayerService, IDisposable
     // connections (which it would reject). network-caching smooths HLS/TS startup
     // at the cost of a little zap latency.
     public string? NowPlayingTitle { get; private set; }
+    public string? CurrentKey { get; private set; }
 
-    public void Play(string url, string? title = null)
+    public void Play(string url, string? title = null, string? resumeKey = null, long resumeMs = 0)
     {
         NowPlayingTitle = title;
+        CurrentKey = resumeKey;
+        _pendingResumeMs = resumeMs;
         var target = _guard.BeginPlay(url, () => _player.Stop());
         using var media = new Media(_libvlc, new Uri(target));
         media.AddOption(":network-caching=1000");

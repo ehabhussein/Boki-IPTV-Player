@@ -8,13 +8,15 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BokiIPTV.App.ViewModels;
 
-public enum SectionKind { Live, Movies, Series, Favorites, Playlist }
+public enum SectionKind { Live, Movies, Series, Favorites, Playlist, History }
 
 public partial class SectionViewModel : ObservableObject
 {
     private readonly IXtreamClient _client;
     private readonly ICacheService _cache;
     private readonly IFavoritesService _favs;
+    private readonly IWatchHistoryService _history;
+    private readonly IResumeService _resume;
     private readonly IEpgService _epg;
     private readonly IPlayerService _player;
     private readonly XtreamCredentials _cred;
@@ -43,17 +45,19 @@ public partial class SectionViewModel : ObservableObject
     private readonly List<M3uEntry> _playlist;
 
     public SectionViewModel(SectionKind kind, string title, IXtreamClient client, ICacheService cache,
-        IFavoritesService favs, IEpgService epg, IPlayerService player, XtreamCredentials cred,
-        IReadOnlyList<M3uEntry>? playlist = null)
+        IFavoritesService favs, IWatchHistoryService history, IResumeService resume, IEpgService epg,
+        IPlayerService player, XtreamCredentials cred, IReadOnlyList<M3uEntry>? playlist = null)
     {
         Kind = kind; Title = title;
-        _client = client; _cache = cache; _favs = favs; _epg = epg; _player = player; _cred = cred;
+        _client = client; _cache = cache; _favs = favs; _history = history; _resume = resume;
+        _epg = epg; _player = player; _cred = cred;
         _playlist = playlist?.ToList() ?? [];
     }
 
     public async Task LoadCategoriesAsync()
     {
         if (Kind == SectionKind.Favorites) { LoadFavorites(); return; }
+        if (Kind == SectionKind.History) { LoadHistory(); return; }
         if (Kind == SectionKind.Playlist) { LoadPlaylistCategories(); return; }
         if (Categories.Count > 0) return;
         Loading = true;
@@ -74,6 +78,12 @@ public partial class SectionViewModel : ObservableObject
     {
         Items.Clear();
         foreach (var e in _favs.Entries) Items.Add(e);
+    }
+
+    public void LoadHistory()
+    {
+        Items.Clear();
+        foreach (var e in _history.Recent) Items.Add(e);
     }
 
     private void LoadPlaylistCategories()
@@ -189,7 +199,7 @@ public partial class SectionViewModel : ObservableObject
         DetailTitle = Name(item);
         IsFavorited = _favs.IsFavorite(KeyOf(item) ?? "");
         CanPlaySelected = item is Channel or Movie or M3uEntry
-            || item is FavoriteEntry { Kind: "live" or "vod" or "m3u" };
+            || (item is FavoriteEntry pf && (pf.Url is not null || pf.Kind is "live" or "vod"));
 
         try
         {
@@ -266,17 +276,33 @@ public partial class SectionViewModel : ObservableObject
     private void Play(object? item)
     {
         item ??= SelectedItem;
+        if (item is null) return;
         var url = item switch
         {
             Channel c => StreamUrlBuilder.Live(_cred, c.StreamId),
             Movie m => StreamUrlBuilder.Movie(_cred, m.StreamId, m.ContainerExtension),
             M3uEntry e => e.Url,
-            FavoriteEntry { Kind: "live" } f => StreamUrlBuilder.Live(_cred, f.StreamId),
-            FavoriteEntry { Kind: "vod" } f => StreamUrlBuilder.Movie(_cred, f.StreamId, f.Ext),
-            FavoriteEntry { Kind: "m3u" } f => f.Url,
+            FavoriteEntry f => f.Url                                        // history / m3u favorites carry a URL
+                ?? f.Kind switch
+                {
+                    "live" => StreamUrlBuilder.Live(_cred, f.StreamId),
+                    "vod" => StreamUrlBuilder.Movie(_cred, f.StreamId, f.Ext),
+                    _ => null
+                },
             _ => null
         };
-        if (url is not null) _player.Play(url, Name(item!));
+        if (url is null) return;
+        var title = Name(item);
+        // Live has no meaningful resume; everything else resumes where it left off.
+        string? key = item switch
+        {
+            Channel => null,
+            FavoriteEntry { Kind: "live" } => null,
+            _ => KeyOf(item)
+        };
+        var resumeMs = key is not null ? _resume.GetMs(key) : 0;
+        _player.Play(url, title, key, resumeMs);
+        RecordHistory(item, url, title);
     }
 
     [RelayCommand]
@@ -284,7 +310,33 @@ public partial class SectionViewModel : ObservableObject
     {
         if (ep is null) return;
         var title = DetailTitle is { Length: > 0 } s ? $"{s} — {ep.Display}" : ep.Display;
-        _player.Play(StreamUrlBuilder.Episode(_cred, ep.Id, ep.ContainerExtension), title);
+        var url = StreamUrlBuilder.Episode(_cred, ep.Id, ep.ContainerExtension);
+        var key = $"episode:{ep.Id}";
+        _player.Play(url, title, key, _resume.GetMs(key));
+        _history.Record(new FavoriteEntry
+        {
+            Key = $"episode:{ep.Id}", Title = title, Kind = "episode",
+            Url = url, Icon = DetailPoster, WatchedAt = DateTimeOffset.UtcNow
+        });
+    }
+
+    // Records movies / episodes / on-demand playlist items into watch history. Skips live TV.
+    private void RecordHistory(object item, string url, string title)
+    {
+        var kind = item switch
+        {
+            Movie => "vod", M3uEntry => "m3u", FavoriteEntry f => f.Kind, _ => null
+        };
+        if (kind is null or "live") return;
+        var icon = item switch
+        {
+            Movie m => m.StreamIcon, M3uEntry e => e.Logo, FavoriteEntry f => f.Icon, _ => DetailPoster
+        };
+        _history.Record(new FavoriteEntry
+        {
+            Key = KeyOf(item) ?? url, Title = title, Kind = kind,
+            Url = url, Icon = icon, WatchedAt = DateTimeOffset.UtcNow
+        });
     }
 
     [RelayCommand]

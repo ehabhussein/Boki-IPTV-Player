@@ -1,5 +1,6 @@
 using System.Windows.Threading;
 using BokiIPTV.App.Services;
+using BokiIPTV.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -8,6 +9,7 @@ namespace BokiIPTV.App.ViewModels;
 public partial class PlayerViewModel : ObservableObject
 {
     private readonly IPlayerService _player;
+    private readonly IResumeService _resume;
     private readonly DispatcherTimer _timer;
     private bool _suppressSeek;   // true while we push the timer value into Position (so the setter doesn't seek)
 
@@ -17,9 +19,10 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private string _timeText = "00:00 / 00:00";
     [ObservableProperty] private string? _nowPlaying;
 
-    public PlayerViewModel(IPlayerService player)
+    public PlayerViewModel(IPlayerService player, IResumeService resume)
     {
         _player = player;
+        _resume = resume;
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => Tick();
         _timer.Start();
@@ -33,6 +36,10 @@ public partial class PlayerViewModel : ObservableObject
         _suppressSeek = false;
         TimeText = $"{Fmt(_player.TimeMs)} / {Fmt(_player.LengthMs)}";
         NowPlaying = _player.NowPlayingTitle;
+
+        // Persist resume position for the current movie/episode.
+        if (_player.CurrentKey is { } key && _player.TimeMs > 0)
+            _resume.Save(key, _player.TimeMs, _player.LengthMs);
     }
 
     private static string Fmt(long ms)

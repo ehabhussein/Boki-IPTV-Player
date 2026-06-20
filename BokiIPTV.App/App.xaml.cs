@@ -22,6 +22,8 @@ public partial class App : Application
                 services.AddSingleton<IConfigService>(_ => new ConfigService(AppPaths.Root));
                 services.AddSingleton<ICacheService>(_ => new CacheService(AppPaths.Cache));
                 services.AddSingleton<IFavoritesService>(_ => new FavoritesService(AppPaths.Root));
+                services.AddSingleton<IWatchHistoryService>(_ => new WatchHistoryService(AppPaths.Root));
+                services.AddSingleton<IResumeService>(_ => new ResumeService(AppPaths.Root));
 
                 services.AddSingleton(sp =>
                 {

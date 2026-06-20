@@ -13,6 +13,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IXtreamClient _client;
     private readonly ICacheService _cache;
     private readonly IFavoritesService _favs;
+    private readonly IWatchHistoryService _history;
+    private readonly IResumeService _resume;
     private readonly IEpgService _epg;
     private readonly IPlayerService _player;
     private readonly IConfigService _config;
@@ -24,17 +26,20 @@ public partial class MainViewModel : ObservableObject
     public PlayerViewModel Player { get; }
 
     public MainViewModel(IXtreamClient client, ICacheService cache, IFavoritesService favs,
-        IEpgService epg, IPlayerService player, IConfigService config)
+        IWatchHistoryService history, IResumeService resume, IEpgService epg, IPlayerService player,
+        IConfigService config)
     {
-        _client = client; _cache = cache; _favs = favs; _epg = epg; _player = player; _config = config;
+        _client = client; _cache = cache; _favs = favs; _history = history; _resume = resume;
+        _epg = epg; _player = player; _config = config;
         var cfg = config.Load();
         _cred = new XtreamCredentials(cfg.BaseUrl, cfg.Username, cfg.Password);
-        Player = new PlayerViewModel(player) { Volume = cfg.Volume };
+        Player = new PlayerViewModel(player, resume) { Volume = cfg.Volume };
 
         Sections.Add(NewSection(SectionKind.Live, "Live TV"));
         Sections.Add(NewSection(SectionKind.Movies, "Movies"));
         Sections.Add(NewSection(SectionKind.Series, "Series"));
         Sections.Add(NewSection(SectionKind.Favorites, "Favorites"));
+        Sections.Add(NewSection(SectionKind.History, "Recently Watched"));
         SelectedSection = Sections[0];
 
         if (!string.IsNullOrWhiteSpace(cfg.M3uSource))
@@ -42,7 +47,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     private SectionViewModel NewSection(SectionKind kind, string title, IReadOnlyList<BokiIPTV.Core.Models.M3uEntry>? pl = null)
-        => new(kind, title, _client, _cache, _favs, _epg, _player, _cred, pl);
+        => new(kind, title, _client, _cache, _favs, _history, _resume, _epg, _player, _cred, pl);
 
     partial void OnSelectedSectionChanged(SectionViewModel? value) => _ = value?.LoadCategoriesAsync();
 
