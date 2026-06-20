@@ -1,0 +1,19 @@
+<Window x:Class="BokiIPTV.App.LoginView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BokiIPTV.App"
+        Title="BokiIPTV — Sign in" Height="380" Width="440"
+        WindowStartupLocation="CenterScreen" Background="#202225">
+    <StackPanel Margin="28" VerticalAlignment="Center">
+        <TextBlock Text="BokiIPTV" FontSize="30" FontWeight="Bold" Foreground="White" Margin="0,0,0,18"/>
+        <TextBlock Text="Server URL" Foreground="#B9BBBE"/>
+        <TextBox Text="{Binding BaseUrl}" Margin="0,4,0,12" Padding="6"/>
+        <TextBlock Text="Username" Foreground="#B9BBBE"/>
+        <TextBox Text="{Binding Username}" Margin="0,4,0,12" Padding="6"/>
+        <TextBlock Text="Password" Foreground="#B9BBBE"/>
+        <PasswordBox x:Name="Pwd" Margin="0,4,0,16" Padding="6" PasswordChanged="Pwd_OnChanged"/>
+        <Button Content="Sign in" Command="{Binding LoginCommand}" Height="38" FontSize="14"
+                IsEnabled="{Binding Busy, Converter={x:Static local:NotConverter.Instance}}"/>
+        <TextBlock Text="{Binding Error}" Foreground="#F04747" TextWrapping="Wrap" Margin="0,12,0,0"/>
+    </StackPanel>
+</Window>

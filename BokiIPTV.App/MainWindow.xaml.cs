@@ -1,23 +1,29 @@
-﻿using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using BokiIPTV.App.Services;
+using BokiIPTV.App.ViewModels;
 
 namespace BokiIPTV.App;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    private readonly MainViewModel _vm;
+
+    public MainWindow(MainViewModel vm, IPlayerService player)
     {
         InitializeComponent();
+        _vm = vm;
+        DataContext = vm;
+        Loaded += async (_, _) =>
+        {
+            player.Attach(Video);
+            await vm.Sections[0].LoadCategoriesAsync();
+        };
+    }
+
+    private void Item_DoubleClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is ListBoxItem { DataContext: { } item })
+            _vm.SelectedSection?.PlayCommand.Execute(item);
     }
 }
