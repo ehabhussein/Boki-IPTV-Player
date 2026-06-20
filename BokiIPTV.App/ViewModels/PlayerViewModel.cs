@@ -30,16 +30,23 @@ public partial class PlayerViewModel : ObservableObject
 
     private void Tick()
     {
-        IsSeekable = _player.IsSeekable;
-        _suppressSeek = true;
-        Position = _player.Position;
-        _suppressSeek = false;
-        TimeText = $"{Fmt(_player.TimeMs)} / {Fmt(_player.LengthMs)}";
-        NowPlaying = _player.NowPlayingTitle;
+        try
+        {
+            _player.ApplyResumeIfReady();   // seek to saved position once playback is rolling
 
-        // Persist resume position for the current movie/episode.
-        if (_player.CurrentKey is { } key && _player.TimeMs > 0)
-            _resume.Save(key, _player.TimeMs, _player.LengthMs);
+            IsSeekable = _player.IsSeekable;
+            _suppressSeek = true;
+            Position = _player.Position;
+            _suppressSeek = false;
+            TimeText = $"{Fmt(_player.TimeMs)} / {Fmt(_player.LengthMs)}";
+            NowPlaying = _player.NowPlayingTitle;
+
+            // Persist resume position — but not while a resume seek is still pending,
+            // or we'd overwrite the saved spot with the ~0 start position.
+            if (!_player.HasPendingResume && _player.CurrentKey is { } key && _player.TimeMs > 0)
+                _resume.Save(key, _player.TimeMs, _player.LengthMs);
+        }
+        catch { /* a transient player state read can throw mid-transition; ignore */ }
     }
 
     private static string Fmt(long ms)

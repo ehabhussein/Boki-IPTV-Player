@@ -19,14 +19,16 @@ public sealed class ResumeService : IResumeService
 
     public void Save(string key, long positionMs, long durationMs)
     {
-        // Ignore the first few seconds (not worth resuming) and treat the last 5% /
-        // last 2 minutes as "finished" so it restarts from the top next time.
+        // Treat the last 5% / last 2 minutes as "finished" → clear so it restarts next time.
         bool finished = durationMs > 0 && positionMs >= durationMs - Math.Min(120_000, durationMs / 20);
-        if (positionMs < 10_000 || finished)
+        if (finished)
         {
             if (_positions.Remove(key)) Persist();
             return;
         }
+        // Too early to be worth resuming — don't store, but don't wipe an existing entry either.
+        if (positionMs < 10_000) return;
+
         _positions[key] = positionMs;
         Persist();
     }

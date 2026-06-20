@@ -18,10 +18,9 @@ public sealed class PlayerService : IPlayerService, IDisposable
         _libvlc = new LibVLC();
         _player = new MediaPlayer(_libvlc);
         _player.Stopped += (_, _) => _guard.MarkStopped();
-        _player.Playing += (_, _) =>
-        {
-            if (_pendingResumeMs > 0) { _player.Time = _pendingResumeMs; _pendingResumeMs = 0; }
-        };
+        // NOTE: never seek from inside a libVLC event callback (re-entrancy can crash
+        // the native player). The resume seek is applied from the UI timer via
+        // ApplyResumeIfReady() instead.
     }
 
     public void Attach(VideoView view) => view.MediaPlayer = _player;
@@ -29,6 +28,24 @@ public sealed class PlayerService : IPlayerService, IDisposable
     public void Stop() => _player.Stop();
     public void TogglePause() => _player.Pause();
     public void SetVolume(double v01) => _player.Volume = (int)Math.Clamp(v01 * 100, 0, 100);
+
+    public bool HasPendingResume => _pendingResumeMs > 0;
+
+    /// Applies a pending resume seek once the media is actually playing and seekable.
+    /// Called from the UI timer (safe), NOT from a libVLC event callback.
+    public void ApplyResumeIfReady()
+    {
+        if (_pendingResumeMs <= 0) return;
+        try
+        {
+            if (_player.IsPlaying && _player.IsSeekable && _player.Length > 0)
+            {
+                _player.Time = Math.Min(_pendingResumeMs, _player.Length - 1000);
+                _pendingResumeMs = 0;
+            }
+        }
+        catch { _pendingResumeMs = 0; }   // never let a seek failure bubble up
+    }
 
     public double Position
     {

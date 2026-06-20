@@ -7,6 +7,8 @@ public interface IPlayerService
     void Play(string url, string? title = null, string? resumeKey = null, long resumeMs = 0);
     string? NowPlayingTitle { get; }
     string? CurrentKey { get; }
+    bool HasPendingResume { get; }
+    void ApplyResumeIfReady();
     void Stop();
     void TogglePause();
     void SetVolume(double v01);
