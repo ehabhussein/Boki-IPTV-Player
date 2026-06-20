@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BokiIPTV.App/BokiIPTV.App.csproj" />
+  <Project Path="BokiIPTV.Core/BokiIPTV.Core.csproj" />
+  <Project Path="BokiIPTV.Tests/BokiIPTV.Tests.csproj" />
+</Solution>
