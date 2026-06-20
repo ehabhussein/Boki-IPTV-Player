@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Net.Http;
 using BokiIPTV.App.Services;
 using BokiIPTV.Core.Playlist;
 using BokiIPTV.Core.Services;
 using BokiIPTV.Core.Xtream;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace BokiIPTV.App.ViewModels;
 
@@ -15,6 +17,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IFavoritesService _favs;
     private readonly IWatchHistoryService _history;
     private readonly IResumeService _resume;
+    private readonly IDownloadService _downloads;
+    private CancellationTokenSource? _downloadCts;
     private readonly IEpgService _epg;
     private readonly IPlayerService _player;
     private readonly IConfigService _config;
@@ -23,14 +27,17 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<SectionViewModel> Sections { get; } = [];
     [ObservableProperty] private SectionViewModel? _selectedSection;
     [ObservableProperty] private string? _playlistStatus;
+    [ObservableProperty] private bool _isDownloading;
+    [ObservableProperty] private double _downloadProgress;
+    [ObservableProperty] private string? _downloadStatus;
     public PlayerViewModel Player { get; }
 
     public MainViewModel(IXtreamClient client, ICacheService cache, IFavoritesService favs,
-        IWatchHistoryService history, IResumeService resume, IEpgService epg, IPlayerService player,
-        IConfigService config)
+        IWatchHistoryService history, IResumeService resume, IDownloadService downloads,
+        IEpgService epg, IPlayerService player, IConfigService config)
     {
         _client = client; _cache = cache; _favs = favs; _history = history; _resume = resume;
-        _epg = epg; _player = player; _config = config;
+        _downloads = downloads; _epg = epg; _player = player; _config = config;
         var cfg = config.Load();
         _cred = new XtreamCredentials(cfg.BaseUrl, cfg.Username, cfg.Password);
         Player = new PlayerViewModel(player, resume) { Volume = cfg.Volume };
@@ -77,4 +84,34 @@ public partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) { PlaylistStatus = $"Playlist failed: {ex.Message}"; }
     }
+
+    /// Downloads a VOD stream to a chosen path with live progress. One at a time.
+    public async Task StartDownloadAsync(string url, string filePath, string title)
+    {
+        if (IsDownloading) { DownloadStatus = "A download is already in progress."; return; }
+        IsDownloading = true;
+        DownloadProgress = 0;
+        DownloadStatus = $"Downloading {title}…";
+        _downloadCts = new CancellationTokenSource();
+        var progress = new Progress<double>(p =>
+        {
+            DownloadProgress = p;
+            DownloadStatus = $"Downloading {title} — {p:P0}";
+        });
+        try
+        {
+            await _downloads.DownloadAsync(url, filePath, progress, _downloadCts.Token);
+            DownloadStatus = $"Saved: {Path.GetFileName(filePath)}";
+        }
+        catch (OperationCanceledException)
+        {
+            DownloadStatus = "Download canceled.";
+            try { if (File.Exists(filePath)) File.Delete(filePath); } catch { }
+        }
+        catch (Exception ex) { DownloadStatus = $"Download failed: {ex.Message}"; }
+        finally { IsDownloading = false; _downloadCts?.Dispose(); _downloadCts = null; }
+    }
+
+    [RelayCommand]
+    private void CancelDownload() => _downloadCts?.Cancel();
 }

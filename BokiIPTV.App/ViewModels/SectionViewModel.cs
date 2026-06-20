@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using BokiIPTV.App.Services;
 using BokiIPTV.Core.Models;
 using BokiIPTV.Core.Services;
@@ -41,6 +42,7 @@ public partial class SectionViewModel : ObservableObject
     [ObservableProperty] private bool _hasEpisodes;
     [ObservableProperty] private bool _canPlaySelected;
     [ObservableProperty] private bool _isFavorited;
+    [ObservableProperty] private bool _isDownloadable;
 
     private readonly List<M3uEntry> _playlist;
 
@@ -200,6 +202,7 @@ public partial class SectionViewModel : ObservableObject
         IsFavorited = _favs.IsFavorite(KeyOf(item) ?? "");
         CanPlaySelected = item is Channel or Movie or M3uEntry
             || (item is FavoriteEntry pf && (pf.Url is not null || pf.Kind is "live" or "vod"));
+        IsDownloadable = GetDownloadTarget() is not null;
 
         try
         {
@@ -337,6 +340,41 @@ public partial class SectionViewModel : ObservableObject
             Key = KeyOf(item) ?? url, Title = title, Kind = kind,
             Url = url, Icon = icon, WatchedAt = DateTimeOffset.UtcNow
         });
+    }
+
+    /// Resolves a downloadable VOD target (movie / episode / on-demand playlist item) for the
+    /// current selection, or null for live TV / non-downloadable items.
+    public (string Url, string FileName)? GetDownloadTarget()
+    {
+        var item = SelectedItem;
+        string? url;
+        string? ext;
+        switch (item)
+        {
+            case Movie m: url = StreamUrlBuilder.Movie(_cred, m.StreamId, m.ContainerExtension); ext = m.ContainerExtension; break;
+            case M3uEntry e: url = e.Url; ext = ExtFromUrl(e.Url); break;
+            case FavoriteEntry { Kind: "vod" } f: url = f.Url ?? StreamUrlBuilder.Movie(_cred, f.StreamId, f.Ext); ext = f.Ext ?? ExtFromUrl(f.Url); break;
+            case FavoriteEntry { Kind: "m3u" or "episode" } f: url = f.Url; ext = ExtFromUrl(f.Url); break;
+            default: return null;
+        }
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var name = SanitizeFileName(Name(item!));
+        return (url, $"{name}.{(string.IsNullOrWhiteSpace(ext) ? "mp4" : ext)}");
+    }
+
+    private static string? ExtFromUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var ext = Path.GetExtension(new Uri(url, UriKind.RelativeOrAbsolute).IsAbsoluteUri
+            ? new Uri(url).AbsolutePath : url).TrimStart('.');
+        return string.IsNullOrWhiteSpace(ext) ? null : ext;
+    }
+
+    private static string SanitizeFileName(string name)
+    {
+        foreach (var c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+        name = name.Trim();
+        return name.Length == 0 ? "video" : name;
     }
 
     [RelayCommand]

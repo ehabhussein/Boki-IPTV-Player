@@ -24,6 +24,8 @@ public partial class App : Application
                 services.AddSingleton<IFavoritesService>(_ => new FavoritesService(AppPaths.Root));
                 services.AddSingleton<IWatchHistoryService>(_ => new WatchHistoryService(AppPaths.Root));
                 services.AddSingleton<IResumeService>(_ => new ResumeService(AppPaths.Root));
+                services.AddSingleton<IDownloadService>(_ =>
+                    new DownloadService(new System.Net.Http.HttpClient { Timeout = System.Threading.Timeout.InfiniteTimeSpan }));
 
                 services.AddSingleton(sp =>
                 {

@@ -62,6 +62,22 @@ public partial class MainWindow : Window
             await _vm.AddPlaylistAsync(src);
     }
 
+    private async void Download_Click(object sender, RoutedEventArgs e)
+    {
+        var section = _vm.SelectedSection;
+        if (section?.GetDownloadTarget() is not { } target) return;
+
+        var ext = System.IO.Path.GetExtension(target.FileName).TrimStart('.');
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = target.FileName,
+            Filter = $"Video (*.{ext})|*.{ext}|All files (*.*)|*.*",
+            Title = "Save movie as"
+        };
+        if (dlg.ShowDialog(this) == true)
+            await _vm.StartDownloadAsync(target.Url, dlg.FileName, section.DetailTitle ?? "video");
+    }
+
     private void Video_DoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 2) ToggleFullscreen();
