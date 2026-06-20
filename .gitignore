@@ -6,3 +6,6 @@ cache/
 config.json
 publish/
 .superpowers/
+publish-win-x64/
+publish-win-arm64/
+*.zip
