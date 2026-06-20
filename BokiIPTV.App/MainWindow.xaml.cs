@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using BokiIPTV.App.Services;
 using BokiIPTV.App.ViewModels;
+using BokiIPTV.Core.Models;
 
 namespace BokiIPTV.App;
 
@@ -25,5 +26,11 @@ public partial class MainWindow : Window
     {
         if (sender is ListBoxItem { DataContext: { } item })
             _vm.SelectedSection?.PlayCommand.Execute(item);
+    }
+
+    private void Episode_DoubleClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is ListBoxItem { DataContext: Episode ep })
+            _vm.SelectedSection?.PlayEpisodeCommand.Execute(ep);
     }
 }

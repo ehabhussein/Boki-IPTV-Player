@@ -43,6 +43,10 @@ public sealed class XtreamClient(HttpClient http, XtreamCredentials cred) : IXtr
         => GetListAsync<Category>(Url("get_series_categories"), ct);
     public Task<IReadOnlyList<Series>> GetSeriesAsync(string categoryId, CancellationToken ct)
         => GetListAsync<Series>(Url("get_series", ("category_id", categoryId)), ct);
+    public Task<SeriesInfo> GetSeriesInfoAsync(int seriesId, CancellationToken ct)
+        => GetAsync<SeriesInfo>(Url("get_series_info", ("series_id", seriesId.ToString())), ct);
+    public Task<VodInfo> GetVodInfoAsync(int vodId, CancellationToken ct)
+        => GetAsync<VodInfo>(Url("get_vod_info", ("vod_id", vodId.ToString())), ct);
 
     public async Task<IReadOnlyList<EpgEntry>> GetShortEpgAsync(int streamId, CancellationToken ct)
     {

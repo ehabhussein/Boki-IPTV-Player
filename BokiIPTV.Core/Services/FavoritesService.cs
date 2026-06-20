@@ -4,28 +4,30 @@ namespace BokiIPTV.Core.Services;
 public sealed class FavoritesService : IFavoritesService
 {
     private readonly string _path;
-    private readonly HashSet<string> _set;
+    private readonly Dictionary<string, FavoriteEntry> _map;
 
     public FavoritesService(string directory)
     {
         Directory.CreateDirectory(directory);
         _path = Path.Combine(directory, "favorites.json");
-        _set = File.Exists(_path)
-            ? JsonSerializer.Deserialize<HashSet<string>>(File.ReadAllText(_path)) ?? new()
+        var list = File.Exists(_path)
+            ? JsonSerializer.Deserialize<List<FavoriteEntry>>(File.ReadAllText(_path)) ?? new()
             : new();
+        _map = list.ToDictionary(e => e.Key);
     }
 
-    public IReadOnlyCollection<string> All => _set;
-    public bool IsFavorite(string itemKey) => _set.Contains(itemKey);
+    public IReadOnlyCollection<FavoriteEntry> Entries => _map.Values;
+    public bool IsFavorite(string itemKey) => _map.ContainsKey(itemKey);
 
-    private void Persist() => File.WriteAllText(_path, JsonSerializer.Serialize(_set));
+    private void Persist() => File.WriteAllText(_path, JsonSerializer.Serialize(_map.Values.ToList()));
 
     // Add if absent, remove if present; persist immediately so favorites survive
     // a crash or kill. Returns the new state (true = now a favorite) for the star UI.
-    public bool Toggle(string itemKey)
+    public bool Toggle(FavoriteEntry entry)
     {
-        bool nowFavorite = _set.Add(itemKey);
-        if (!nowFavorite) _set.Remove(itemKey);
+        bool nowFavorite;
+        if (_map.ContainsKey(entry.Key)) { _map.Remove(entry.Key); nowFavorite = false; }
+        else { _map[entry.Key] = entry; nowFavorite = true; }
         Persist();
         return nowFavorite;
     }

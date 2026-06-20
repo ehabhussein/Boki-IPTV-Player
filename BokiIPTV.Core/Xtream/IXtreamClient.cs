@@ -10,5 +10,7 @@ public interface IXtreamClient
     Task<IReadOnlyList<Movie>> GetVodStreamsAsync(string categoryId, CancellationToken ct);
     Task<IReadOnlyList<Category>> GetSeriesCategoriesAsync(CancellationToken ct);
     Task<IReadOnlyList<Series>> GetSeriesAsync(string categoryId, CancellationToken ct);
+    Task<SeriesInfo> GetSeriesInfoAsync(int seriesId, CancellationToken ct);
+    Task<VodInfo> GetVodInfoAsync(int vodId, CancellationToken ct);
     Task<IReadOnlyList<EpgEntry>> GetShortEpgAsync(int streamId, CancellationToken ct);
 }
