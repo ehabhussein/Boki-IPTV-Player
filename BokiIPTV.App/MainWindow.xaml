@@ -3,44 +3,50 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:BokiIPTV.App"
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
-        Title="BokiIPTV" Height="800" Width="1340"
-        WindowStartupLocation="CenterScreen" Background="#202225"
+        Title="BokiIPTV" Height="820" Width="1380"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource Bg}"
         KeyDown="Window_KeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="Col0" Width="150"/>
-            <ColumnDefinition x:Name="Col1" Width="220"/>
-            <ColumnDefinition x:Name="Col2" Width="300"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="Col0" Width="190"/>
+            <ColumnDefinition x:Name="Col1" Width="230"/>
+            <ColumnDefinition x:Name="Col2" Width="*"/>
+            <ColumnDefinition x:Name="Col3" Width="430"/>
         </Grid.ColumnDefinitions>
 
         <!-- Nav -->
-        <ListBox Grid.Column="0" ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection}"
-                 DisplayMemberPath="Title" Background="#1E1F22" Foreground="White"
-                 BorderThickness="0" FontSize="14"/>
+        <Border Grid.Column="0" Background="{StaticResource Panel}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="BokiIPTV" Foreground="{StaticResource Text}"
+                           FontSize="22" FontWeight="Bold" Margin="18,20,0,18"/>
+                <ListBox Style="{StaticResource NavList}" ItemsSource="{Binding Sections}"
+                         SelectedItem="{Binding SelectedSection}" DisplayMemberPath="Title"/>
+            </DockPanel>
+        </Border>
 
-        <!-- Categories (playlists) -->
-        <DockPanel Grid.Column="1" Background="#2B2D31">
-            <TextBlock DockPanel.Dock="Top" Text="Categories" Foreground="#B9BBBE"
-                       Margin="10,8" FontWeight="SemiBold"/>
-            <ListBox ItemsSource="{Binding SelectedSection.Categories}"
-                     SelectedItem="{Binding SelectedSection.SelectedCategory}"
-                     DisplayMemberPath="CategoryName" Background="Transparent" Foreground="White"
-                     BorderThickness="0"
-                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
-        </DockPanel>
+        <!-- Categories -->
+        <Border Grid.Column="1" Background="{StaticResource Panel}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="CATEGORIES" Foreground="{StaticResource TextMuted}"
+                           Margin="14,18,0,8" FontWeight="SemiBold" FontSize="11"/>
+                <ListBox Style="{StaticResource CategoryList}"
+                         ItemsSource="{Binding SelectedSection.Categories}"
+                         SelectedItem="{Binding SelectedSection.SelectedCategory}"
+                         DisplayMemberPath="CategoryName"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
+            </DockPanel>
+        </Border>
 
-        <!-- Items -->
-        <Grid Grid.Column="2" Background="#313338">
+        <!-- Items (poster grid) -->
+        <Grid Grid.Column="2" Background="{StaticResource Bg}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Grid Grid.Row="0">
-                <TextBox Margin="8" Padding="6,6,6,6"
-                         Text="{Binding SelectedSection.SearchText, UpdateSourceTrigger=PropertyChanged, Delay=450}"/>
-                <TextBlock Text="Search all…" Foreground="#80FFFFFF" Margin="16,0,0,0"
-                           VerticalAlignment="Center" IsHitTestVisible="False">
+            <Grid Grid.Row="0" Margin="14,14,14,6">
+                <TextBox Text="{Binding SelectedSection.SearchText, UpdateSourceTrigger=PropertyChanged, Delay=450}"/>
+                <TextBlock Text="🔍  Search all movies, series, channels…" Foreground="{StaticResource TextMuted}"
+                           Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -53,33 +59,21 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
-            <ListBox Grid.Row="1" x:Name="ItemsList" ItemsSource="{Binding SelectedSection.Items}"
+            <ListBox Grid.Row="1" x:Name="ItemsList" Style="{StaticResource PosterGrid}"
+                     Margin="8,0,8,8"
+                     ItemsSource="{Binding SelectedSection.Items}"
                      SelectedItem="{Binding SelectedSection.SelectedItem}"
-                     Background="Transparent" Foreground="White" BorderThickness="0"
-                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                     ScrollViewer.IsDeferredScrollingEnabled="True">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <EventSetter Event="MouseDoubleClick" Handler="Item_DoubleClick"/>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" Padding="4,3" TextTrimming="CharacterEllipsis"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                     MouseDoubleClick="ItemsList_DoubleClick"/>
         </Grid>
 
         <!-- Detail + player -->
-        <Grid Grid.Column="3">
+        <Grid Grid.Column="3" Background="{StaticResource Panel}">
             <Grid.RowDefinitions>
                 <RowDefinition x:Name="DetailRow" Height="*"/>
-                <RowDefinition Height="360"/>
+                <RowDefinition x:Name="PlayerRow" Height="300"/>
             </Grid.RowDefinitions>
 
-            <!-- Detail panel -->
-            <Border x:Name="DetailPanel" Grid.Row="0" Background="#232428" Padding="16">
+            <Border x:Name="DetailPanel" Grid.Row="0" Padding="18">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -88,46 +82,44 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal">
-                        <Border Width="130" Height="190" Background="#1B1C1F" CornerRadius="6">
+                        <Border Width="120" Height="178" Background="#0B0D12" CornerRadius="8" ClipToBounds="True">
                             <Image Stretch="UniformToFill"
                                    Source="{Binding SelectedSection.DetailPoster, Converter={x:Static local:PosterConverter.Instance}}"/>
                         </Border>
-                        <StackPanel Margin="16,0,0,0" Width="430">
-                            <TextBlock Text="{Binding SelectedSection.DetailTitle}" Foreground="White"
-                                       FontSize="20" FontWeight="Bold" TextWrapping="Wrap"/>
-                            <TextBlock Text="{Binding SelectedSection.DetailMeta}" Foreground="#9AA0A6"
-                                       Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <StackPanel Margin="14,0,0,0" Width="240">
+                            <TextBlock Text="{Binding SelectedSection.DetailTitle}" Foreground="{StaticResource Text}"
+                                       FontSize="18" FontWeight="Bold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding SelectedSection.DetailMeta}" Foreground="{StaticResource TextMuted}"
+                                       Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"/>
                             <TextBlock Text="{Binding SelectedSection.NowNext}" Foreground="#7FD17F"
-                                       Margin="0,8,0,0" TextWrapping="Wrap"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                                <Button Content="▶  Play" Command="{Binding SelectedSection.PlayCommand}"
-                                        IsEnabled="{Binding SelectedSection.CanPlaySelected}"
-                                        Padding="16,6" FontSize="14" FontWeight="SemiBold"/>
-                                <ToggleButton Content="★ Favorite" Command="{Binding SelectedSection.ToggleFavoriteCommand}"
-                                              IsChecked="{Binding SelectedSection.IsFavorited, Mode=OneWay}"
-                                              Padding="12,6" Margin="10,0,0,0"/>
-                            </StackPanel>
+                                       Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"/>
+                            <Button Content="▶  Play" Command="{Binding SelectedSection.PlayCommand}"
+                                    IsEnabled="{Binding SelectedSection.CanPlaySelected}"
+                                    Padding="16,8" FontWeight="SemiBold" Margin="0,14,0,0" HorizontalAlignment="Left"/>
+                            <ToggleButton Content="★ Favorite" Command="{Binding SelectedSection.ToggleFavoriteCommand}"
+                                          IsChecked="{Binding SelectedSection.IsFavorited, Mode=OneWay}"
+                                          Padding="12,7" Margin="0,8,0,0" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="1" Text="{Binding SelectedSection.DetailPlot}" Foreground="#C7CBD1"
-                               TextWrapping="Wrap" Margin="0,14,0,0" MaxHeight="120"/>
+                    <TextBlock Grid.Row="1" Text="{Binding SelectedSection.DetailPlot}" Foreground="{StaticResource TextMuted}"
+                               TextWrapping="Wrap" Margin="0,14,0,0" MaxHeight="96" FontSize="12"/>
 
                     <DockPanel Grid.Row="2" Margin="0,14,0,0"
                                Visibility="{Binding SelectedSection.HasEpisodes, Converter={x:Static local:BoolToVisibilityConverter.Instance}}">
-                        <TextBlock DockPanel.Dock="Top" Text="Episodes (double-click to play)"
-                                   Foreground="#B9BBBE" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                        <ListBox x:Name="EpisodeList" ItemsSource="{Binding SelectedSection.Episodes}"
-                                 Background="#1B1C1F" Foreground="White" BorderThickness="0"
+                        <TextBlock DockPanel.Dock="Top" Text="EPISODES — double-click to play"
+                                   Foreground="{StaticResource TextMuted}" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,6"/>
+                        <ListBox x:Name="EpisodeList" Style="{StaticResource CategoryList}"
+                                 ItemsSource="{Binding SelectedSection.Episodes}"
                                  VirtualizingPanel.IsVirtualizing="True">
                             <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                                     <EventSetter Event="MouseDoubleClick" Handler="Episode_DoubleClick"/>
                                 </Style>
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Display}" Padding="4,3"/>
+                                    <TextBlock Text="{Binding Display}" Foreground="{StaticResource Text}"/>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -146,32 +138,24 @@
                     <vlc:VideoView x:Name="Video"/>
                 </Border>
 
-                <!-- Control bar -->
-                <Grid Grid.Row="1" Background="#16171A">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Seek bar (VOD) -->
-                    <Slider Grid.Row="0" Margin="10,6,10,0" Minimum="0" Maximum="1"
-                            Value="{Binding Player.Position}"
-                            IsEnabled="{Binding Player.IsSeekable}"/>
-
-                    <DockPanel Grid.Row="1" Margin="10,4,10,8">
-                        <TextBlock Text="{Binding Player.TimeText}" Foreground="#C7CBD1"
-                                   VerticalAlignment="Center" DockPanel.Dock="Left" Width="120"/>
-                        <Button Content="⛶ Fullscreen" Click="Fullscreen_Click" DockPanel.Dock="Right"
-                                Padding="10,4" Margin="6,0,0,0"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Content="⏯ Play/Pause" Command="{Binding Player.PlayPauseCommand}" Margin="4" Padding="10,4"/>
-                            <Button Content="⏹ Stop" Command="{Binding Player.StopCommand}" Margin="4" Padding="10,4"/>
-                            <TextBlock Text="🔊" Foreground="White" VerticalAlignment="Center" Margin="10,0,4,0"/>
-                            <Slider Width="110" Minimum="0" Maximum="1" Value="{Binding Player.Volume}"
-                                    VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DockPanel>
-                </Grid>
+                <Border Grid.Row="1" Background="#0B0D12">
+                    <StackPanel Margin="10,6">
+                        <Slider Minimum="0" Maximum="1" Value="{Binding Player.Position}"
+                                IsEnabled="{Binding Player.IsSeekable}"/>
+                        <DockPanel Margin="0,4,0,2">
+                            <TextBlock Text="{Binding Player.TimeText}" Foreground="{StaticResource TextMuted}"
+                                       VerticalAlignment="Center" DockPanel.Dock="Left" Width="110" FontSize="12"/>
+                            <Button Content="⛶" Click="Fullscreen_Click" DockPanel.Dock="Right"
+                                    Padding="10,4" Background="{StaticResource Card}" ToolTip="Fullscreen (F11)"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Button Content="⏯" Command="{Binding Player.PlayPauseCommand}" Margin="3" Padding="12,4" Background="{StaticResource Card}"/>
+                                <Button Content="⏹" Command="{Binding Player.StopCommand}" Margin="3" Padding="12,4" Background="{StaticResource Card}"/>
+                                <TextBlock Text="🔊" Foreground="{StaticResource Text}" VerticalAlignment="Center" Margin="10,0,4,0"/>
+                                <Slider Width="90" Minimum="0" Maximum="1" Value="{Binding Player.Volume}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Grid>
     </Grid>

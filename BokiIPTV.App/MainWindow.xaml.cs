@@ -11,7 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
     private bool _fullscreen;
-    private GridLength _c0, _c1, _c2, _detail;
+    private GridLength _c0, _c1, _c2, _detail, _playerRow;
     private WindowStyle _prevStyle;
     private WindowState _prevState;
     private ResizeMode _prevResize;
@@ -28,10 +28,17 @@ public partial class MainWindow : Window
         };
     }
 
-    private void Item_DoubleClick(object sender, RoutedEventArgs e)
+    private void ItemsList_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is ListBoxItem { DataContext: { } item })
+        // Only act when a real item was double-clicked (not empty space / scrollbar).
+        if (e.OriginalSource is DependencyObject d && ItemFromVisual(d) is { } item)
             _vm.SelectedSection?.PlayCommand.Execute(item);
+    }
+
+    private static object? ItemFromVisual(DependencyObject d)
+    {
+        while (d is not null and not ListBoxItem) d = System.Windows.Media.VisualTreeHelper.GetParent(d);
+        return (d as ListBoxItem)?.DataContext;
     }
 
     private void Episode_DoubleClick(object sender, RoutedEventArgs e)
@@ -57,13 +64,15 @@ public partial class MainWindow : Window
     {
         if (!_fullscreen)
         {
-            _c0 = Col0.Width; _c1 = Col1.Width; _c2 = Col2.Width; _detail = DetailRow.Height;
+            _c0 = Col0.Width; _c1 = Col1.Width; _c2 = Col2.Width;
+            _detail = DetailRow.Height; _playerRow = PlayerRow.Height;
             _prevStyle = WindowStyle; _prevState = WindowState; _prevResize = ResizeMode;
 
             Col0.Width = new GridLength(0);
             Col1.Width = new GridLength(0);
             Col2.Width = new GridLength(0);
             DetailRow.Height = new GridLength(0);
+            PlayerRow.Height = new GridLength(1, GridUnitType.Star);   // video now fills the whole window
             DetailPanel.Visibility = Visibility.Collapsed;
 
             WindowStyle = WindowStyle.None;
@@ -73,7 +82,8 @@ public partial class MainWindow : Window
         }
         else
         {
-            Col0.Width = _c0; Col1.Width = _c1; Col2.Width = _c2; DetailRow.Height = _detail;
+            Col0.Width = _c0; Col1.Width = _c1; Col2.Width = _c2;
+            DetailRow.Height = _detail; PlayerRow.Height = _playerRow;
             DetailPanel.Visibility = Visibility.Visible;
 
             WindowStyle = _prevStyle;

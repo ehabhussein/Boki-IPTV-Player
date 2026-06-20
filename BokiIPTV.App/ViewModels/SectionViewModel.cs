@@ -109,7 +109,9 @@ public partial class SectionViewModel : ObservableObject
                 SectionKind.Series => await _client.GetSeriesAsync(SelectedCategory.CategoryId, default),
                 _ => []
             };
-            foreach (var i in items) Items.Add(i);
+            // Poster grid isn't virtualized; cap rendered cards. Categories rarely exceed this,
+            // and global search reaches anything beyond the cap.
+            foreach (var i in items.Take(600)) Items.Add(i);
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"LoadItems failed: {ex.Message}"); }
         finally { Loading = false; }
