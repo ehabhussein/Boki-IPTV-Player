@@ -15,6 +15,7 @@ public partial class PlayerViewModel : ObservableObject
     [ObservableProperty] private double _position;          // 0..1
     [ObservableProperty] private bool _isSeekable;
     [ObservableProperty] private string _timeText = "00:00 / 00:00";
+    [ObservableProperty] private string? _nowPlaying;
 
     public PlayerViewModel(IPlayerService player)
     {
@@ -31,6 +32,7 @@ public partial class PlayerViewModel : ObservableObject
         Position = _player.Position;
         _suppressSeek = false;
         TimeText = $"{Fmt(_player.TimeMs)} / {Fmt(_player.LengthMs)}";
+        NowPlaying = _player.NowPlayingTitle;
     }
 
     private static string Fmt(long ms)

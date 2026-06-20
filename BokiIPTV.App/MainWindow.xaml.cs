@@ -55,6 +55,13 @@ public partial class MainWindow : Window
     private void Fullscreen_Click(object sender, RoutedEventArgs e) => ToggleFullscreen();
     private void Pip_Click(object sender, RoutedEventArgs e) => TogglePip();
 
+    private async void AddPlaylist_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new AddPlaylistWindow { Owner = this };
+        if (dlg.ShowDialog() == true && dlg.Source is { } src)
+            await _vm.AddPlaylistAsync(src);
+    }
+
     private void Video_DoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 2) ToggleFullscreen();

@@ -1,0 +1,8 @@
+{
+  "BaseUrl": "http://your-server.example:8080",
+  "Username": "your_username",
+  "Password": "your_password",
+  "Volume": 1.0,
+  "LastSection": null,
+  "M3uSource": null
+}

@@ -9,7 +9,7 @@ namespace BokiIPTV.App.ViewModels;
 
 public partial class LoginViewModel(IConfigService config) : ObservableObject
 {
-    [ObservableProperty] private string _baseUrl = "http://egysatv.com:8080";
+    [ObservableProperty] private string _baseUrl = "http://your-server.example:8080";
     [ObservableProperty] private string _username = "";
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private string? _error;

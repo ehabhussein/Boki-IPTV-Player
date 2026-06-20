@@ -11,7 +11,7 @@ IPTV Smarters by connecting directly to the provider with URL + username + passw
 
 ### Verified provider facts (live, 2026-06-20)
 
-Server `http://egysatv.com:8080`, user `ehussein`:
+Server `http://your-server.example:8080`, user `demo_user`:
 
 - Auth endpoint returns `auth:1`, status `Active`, **`max_connections: 1`**,
   `allowed_output_formats: ["m3u8","ts"]`.

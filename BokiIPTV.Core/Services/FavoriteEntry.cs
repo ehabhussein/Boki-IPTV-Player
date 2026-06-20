@@ -10,6 +10,7 @@ public sealed class FavoriteEntry
     public int StreamId { get; init; }
     public string? Ext { get; init; }
     public string? Icon { get; init; }
+    public string? Url { get; init; }   // direct stream URL for M3U entries
 
     // Lets the Favorites tab reuse the same item template that binds "Name".
     public string Name => Title;

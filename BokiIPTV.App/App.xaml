@@ -232,6 +232,17 @@
             </StackPanel>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type m:M3uEntry}">
+            <StackPanel Width="138">
+                <Border Height="104" CornerRadius="8" Background="#0B0D12">
+                    <Image Source="{Binding Logo, Converter={x:Static local:PosterConverter.Instance}}"
+                           Stretch="Uniform" Margin="14"/>
+                </Border>
+                <TextBlock Text="{Binding Name}" Foreground="{StaticResource Text}" FontSize="12"
+                           Margin="2,6,2,0" TextWrapping="Wrap" MaxHeight="32" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type svc:FavoriteEntry}">
             <StackPanel Width="138">
                 <Border Height="150" CornerRadius="8" Background="#0B0D12" ClipToBounds="True">

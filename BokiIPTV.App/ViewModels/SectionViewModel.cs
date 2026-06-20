@@ -8,7 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BokiIPTV.App.ViewModels;
 
-public enum SectionKind { Live, Movies, Series, Favorites }
+public enum SectionKind { Live, Movies, Series, Favorites, Playlist }
 
 public partial class SectionViewModel : ObservableObject
 {
@@ -40,16 +40,21 @@ public partial class SectionViewModel : ObservableObject
     [ObservableProperty] private bool _canPlaySelected;
     [ObservableProperty] private bool _isFavorited;
 
+    private readonly List<M3uEntry> _playlist;
+
     public SectionViewModel(SectionKind kind, string title, IXtreamClient client, ICacheService cache,
-        IFavoritesService favs, IEpgService epg, IPlayerService player, XtreamCredentials cred)
+        IFavoritesService favs, IEpgService epg, IPlayerService player, XtreamCredentials cred,
+        IReadOnlyList<M3uEntry>? playlist = null)
     {
         Kind = kind; Title = title;
         _client = client; _cache = cache; _favs = favs; _epg = epg; _player = player; _cred = cred;
+        _playlist = playlist?.ToList() ?? [];
     }
 
     public async Task LoadCategoriesAsync()
     {
         if (Kind == SectionKind.Favorites) { LoadFavorites(); return; }
+        if (Kind == SectionKind.Playlist) { LoadPlaylistCategories(); return; }
         if (Categories.Count > 0) return;
         Loading = true;
         try
@@ -69,6 +74,15 @@ public partial class SectionViewModel : ObservableObject
     {
         Items.Clear();
         foreach (var e in _favs.Entries) Items.Add(e);
+    }
+
+    private void LoadPlaylistCategories()
+    {
+        if (Categories.Count > 0) return;
+        Categories.Clear();
+        foreach (var g in _playlist.Select(e => e.Group).Distinct().OrderBy(g => g))
+            Categories.Add(new Category { CategoryId = g, CategoryName = g });
+        SelectedCategory = Categories.FirstOrDefault();
     }
 
     private async Task<List<Category>> FetchCategories() => Kind switch
@@ -107,6 +121,7 @@ public partial class SectionViewModel : ObservableObject
                 SectionKind.Live => await _client.GetLiveStreamsAsync(SelectedCategory.CategoryId, default),
                 SectionKind.Movies => await _client.GetVodStreamsAsync(SelectedCategory.CategoryId, default),
                 SectionKind.Series => await _client.GetSeriesAsync(SelectedCategory.CategoryId, default),
+                SectionKind.Playlist => _playlist.Where(e => e.Group == SelectedCategory.CategoryId),
                 _ => []
             };
             // Poster grid isn't virtualized; cap rendered cards. Categories rarely exceed this,
@@ -133,6 +148,7 @@ public partial class SectionViewModel : ObservableObject
 
     private async Task<List<object>> LoadAllItemsAsync()
     {
+        if (Kind == SectionKind.Playlist) return _playlist.Cast<object>().ToList();
         var cacheKey = $"all_{Kind}";
         var cached = Kind switch
         {
@@ -172,7 +188,8 @@ public partial class SectionViewModel : ObservableObject
 
         DetailTitle = Name(item);
         IsFavorited = _favs.IsFavorite(KeyOf(item) ?? "");
-        CanPlaySelected = item is Channel or Movie || item is FavoriteEntry { Kind: "live" or "vod" };
+        CanPlaySelected = item is Channel or Movie or M3uEntry
+            || item is FavoriteEntry { Kind: "live" or "vod" or "m3u" };
 
         try
         {
@@ -210,6 +227,11 @@ public partial class SectionViewModel : ObservableObject
                     HasEpisodes = Episodes.Count > 0;
                     break;
 
+                case M3uEntry me:
+                    DetailPoster = me.Logo;
+                    DetailMeta = me.Group;
+                    break;
+
                 case FavoriteEntry fe:
                     DetailPoster = fe.Icon;
                     break;
@@ -220,7 +242,8 @@ public partial class SectionViewModel : ObservableObject
 
     private static string Name(object o) => o switch
     {
-        Channel c => c.Name, Movie m => m.Name, Series s => s.Name, FavoriteEntry f => f.Title, _ => ""
+        Channel c => c.Name, Movie m => m.Name, Series s => s.Name,
+        M3uEntry e => e.Name, FavoriteEntry f => f.Title, _ => ""
     };
 
     private static string? KeyOf(object o) => o switch
@@ -228,6 +251,7 @@ public partial class SectionViewModel : ObservableObject
         Channel c => $"live:{c.StreamId}",
         Movie m => $"vod:{m.StreamId}",
         Series s => $"series:{s.SeriesId}",
+        M3uEntry e => $"m3u:{e.Url}",
         FavoriteEntry f => f.Key,
         _ => null
     };
@@ -246,18 +270,21 @@ public partial class SectionViewModel : ObservableObject
         {
             Channel c => StreamUrlBuilder.Live(_cred, c.StreamId),
             Movie m => StreamUrlBuilder.Movie(_cred, m.StreamId, m.ContainerExtension),
+            M3uEntry e => e.Url,
             FavoriteEntry { Kind: "live" } f => StreamUrlBuilder.Live(_cred, f.StreamId),
             FavoriteEntry { Kind: "vod" } f => StreamUrlBuilder.Movie(_cred, f.StreamId, f.Ext),
+            FavoriteEntry { Kind: "m3u" } f => f.Url,
             _ => null
         };
-        if (url is not null) _player.Play(url);
+        if (url is not null) _player.Play(url, Name(item!));
     }
 
     [RelayCommand]
     private void PlayEpisode(Episode? ep)
     {
         if (ep is null) return;
-        _player.Play(StreamUrlBuilder.Episode(_cred, ep.Id, ep.ContainerExtension));
+        var title = DetailTitle is { Length: > 0 } s ? $"{s} — {ep.Display}" : ep.Display;
+        _player.Play(StreamUrlBuilder.Episode(_cred, ep.Id, ep.ContainerExtension), title);
     }
 
     [RelayCommand]
@@ -269,6 +296,7 @@ public partial class SectionViewModel : ObservableObject
             Channel c => new FavoriteEntry { Key = $"live:{c.StreamId}", Title = c.Name, Kind = "live", StreamId = c.StreamId, Icon = c.StreamIcon },
             Movie m => new FavoriteEntry { Key = $"vod:{m.StreamId}", Title = m.Name, Kind = "vod", StreamId = m.StreamId, Ext = m.ContainerExtension, Icon = m.StreamIcon },
             Series s => new FavoriteEntry { Key = $"series:{s.SeriesId}", Title = s.Name, Kind = "series", StreamId = s.SeriesId, Icon = s.Cover },
+            M3uEntry e => new FavoriteEntry { Key = $"m3u:{e.Url}", Title = e.Name, Kind = "m3u", Url = e.Url, Icon = e.Logo },
             FavoriteEntry f => f,
             _ => null
         };

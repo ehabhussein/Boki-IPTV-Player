@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:BokiIPTV.App"
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
-        Title="BokiIPTV" Height="820" Width="1380"
+        Title="{Binding Player.NowPlaying, StringFormat='BokiIPTV — {0}', TargetNullValue='BokiIPTV'}"
+        Height="820" Width="1380" Icon="icon.ico"
         WindowStartupLocation="CenterScreen" Background="{StaticResource Bg}"
         KeyDown="Window_KeyDown">
     <Grid>
@@ -19,6 +20,10 @@
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="BokiIPTV" Foreground="{StaticResource Text}"
                            FontSize="22" FontWeight="Bold" Margin="18,20,0,18"/>
+                <Button DockPanel.Dock="Bottom" Content="＋  Add M3U Playlist" Click="AddPlaylist_Click"
+                        Margin="12,8,12,8" Padding="10,8" Background="{StaticResource Card}" FontSize="12"/>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding PlaylistStatus}" Foreground="{StaticResource TextMuted}"
+                           Margin="14,0,14,2" FontSize="11" TextWrapping="Wrap"/>
                 <ListBox Style="{StaticResource NavList}" ItemsSource="{Binding Sections}"
                          SelectedItem="{Binding SelectedSection}" DisplayMemberPath="Title"/>
             </DockPanel>
@@ -134,8 +139,29 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="Black" MouseLeftButtonDown="Video_DoubleClick">
-                    <vlc:VideoView x:Name="Video"/>
+                <Border x:Name="VideoArea" Grid.Row="0" Background="Black" MouseLeftButtonDown="Video_DoubleClick">
+                    <Grid>
+                        <vlc:VideoView x:Name="Video"/>
+                        <!-- Title overlay: appears on hover over the video (and works in fullscreen/PiP) -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Stretch" Background="#B0000000"
+                                Padding="14,8">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsMouseOver, ElementName=VideoArea}" Value="True"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding Player.NowPlaying}" Foreground="White"
+                                       FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        </Border>
+                    </Grid>
                 </Border>
 
                 <Border Grid.Row="1" Background="#0B0D12">

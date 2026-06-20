@@ -21,7 +21,7 @@ public class XtreamClientTests
     {
         h = new StubHandler(body);
         return new XtreamClient(new HttpClient(h),
-            new XtreamCredentials("http://egysatv.com:8080", "ehussein", "975284"));
+            new XtreamCredentials("http://your-server.example:8080", "demo_user", "demo_pass"));
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class XtreamClientTests
         var info = await c.AuthenticateAsync(CancellationToken.None);
         Assert.True(info.IsActive);
         Assert.Equal("1", info.MaxConnections);
-        Assert.Contains("player_api.php?username=ehussein&password=975284", h.LastUrl);
+        Assert.Contains("player_api.php?username=demo_user&password=demo_pass", h.LastUrl);
     }
 
     [Fact]

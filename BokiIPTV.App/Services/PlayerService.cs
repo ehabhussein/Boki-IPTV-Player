@@ -37,8 +37,11 @@ public sealed class PlayerService : IPlayerService, IDisposable
     // before we open the next one, so the server never sees two simultaneous
     // connections (which it would reject). network-caching smooths HLS/TS startup
     // at the cost of a little zap latency.
-    public void Play(string url)
+    public string? NowPlayingTitle { get; private set; }
+
+    public void Play(string url, string? title = null)
     {
+        NowPlayingTitle = title;
         var target = _guard.BeginPlay(url, () => _player.Stop());
         using var media = new Media(_libvlc, new Uri(target));
         media.AddOption(":network-caching=1000");
