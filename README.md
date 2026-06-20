@@ -7,13 +7,17 @@ A clean, modern Windows desktop IPTV player built with **.NET 10** and **WPF**, 
 ## Features
 
 - **Live TV, Movies, and Series** — browses your provider's own categories ("playlists")
-- **Poster-wall UI** — cover art for movies/series, channel logos, dark theme
+- **Poster-wall UI** — cover art for movies/series, channel logos, dark theme, app icon
 - **Series support** — full season/episode listing, double-click an episode to play
 - **Movie detail** — poster, plot, genre, director, rating, duration
 - **EPG** — now/next for live channels (degrades gracefully when a channel has no guide data)
 - **Global search** — searches the entire catalogue, not just the open category
 - **Favorites** — star anything; a Favorites tab that persists across restarts
+- **Recently Watched** — movies and episodes you play are tracked automatically (most-recent first)
+- **Resume playback** — reopen a movie/episode and it picks up where you left off (clears when finished)
+- **Download** movies and episodes to a folder you choose, with a progress bar and cancel
 - **M3U / M3U8 playlists** — add a playlist by URL or local file
+- **Video adjustments** — brightness, contrast, saturation, and playback speed (0.25×–2×) via the ⚙ button
 - **Player** — seek bar + time for VOD, volume, play/pause/stop
 - **True fullscreen** (double-click / F11) and a **mini-player / Picture-in-Picture** mode (always-on-top, fills the window) so you can watch while you work
 - **Now-playing title** in the window title bar and as a hover overlay on the video
@@ -37,6 +41,19 @@ dotnet run --project BokiIPTV.App
 
 On first launch, enter your **server URL**, **username**, and **password** (Xtream Codes), or click **＋ Add M3U Playlist** to load an M3U URL/file.
 
+Pre-built **Windows x64** packages (self-contained — no .NET install needed) are on the [Releases](https://github.com/ehabhussein/Boki-IPTV-Player/releases) page.
+
+## Player controls
+
+- **Double-click** a movie/channel/episode to play
+- **Double-click the video** or **F11** to toggle fullscreen, **Esc** to exit
+- **🗗** mini-player / Picture-in-Picture (always-on-top, fills the window)
+- **⚙** brightness / contrast / saturation / playback speed
+- **⬇ Download** the selected movie/episode to a file
+- Seek bar scrubs VOD; resume is automatic on reopen
+
+> **One-connection accounts** (`max_connections: 1`): a download uses your single connection, so you can't watch and download at the same time.
+
 ## Configuration
 
 Settings live at `%AppData%\BokiIPTV\config.json`. See [`config.sample.json`](config.sample.json) for the shape:
@@ -52,6 +69,8 @@ Settings live at `%AppData%\BokiIPTV\config.json`. See [`config.sample.json`](co
 ```
 
 > The password is stored in **plain text** by design (so it can be hand-edited). Keep this file private.
+
+Other state lives alongside it in `%AppData%\BokiIPTV\`: `favorites.json`, `history.json` (Recently Watched), `resume.json` (resume positions), and `cache\` (catalogue cache).
 
 ## Platform support
 
