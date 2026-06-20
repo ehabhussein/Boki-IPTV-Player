@@ -1,0 +1,10 @@
+namespace BokiIPTV.Core.Services;
+
+public sealed class AppConfig
+{
+    public string BaseUrl { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public double Volume { get; set; } = 1.0;
+    public string? LastSection { get; set; }
+}
